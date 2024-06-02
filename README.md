@@ -88,6 +88,36 @@ class Catalogo:
         except Exception as e:
             print("Ocorreu um erro:", e)
 
+def remover_item(self):
+try:
+    codigo = 
+        input("Digite o código do item a ser removido: ")
+                item_encontrado =       
+False
+            linhas_atualizadas = []
+            linhas_a
+with open(self.arquivo_catalogo, "r") as arquivo:
+                reader = csv.reader(arquivo)   
+                read
+for linha in reader:       
+if linha[0] == codigo:
+                        item_encontrado = 
+                        item_encontrado = True                  
+else:
+                        linhas_atualizadas.append(linha)   
+                        linhas_atualizad               
+if item_encontrado:
+                with open(self.arquivo_catalogo, "w", newline="") as arquivo:
+                    writer = csv.writer(arquivo)
+                    writer.writerows(linhas_atualizadas)
+                    writer = csv.writer(arquivo)
+                    writer.writerows(linhas_atualizadas
+                    writer = csv.writer(arquivo)
+print("Item removido com sucesso!")
+            else:
+                print("Item não encontrado.")
+        except FileNotFoundError:
+
     def menu(self):
         while True:
             print("1. Adicionar item")
