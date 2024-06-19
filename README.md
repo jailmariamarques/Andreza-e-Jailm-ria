@@ -1,49 +1,96 @@
 import csv
 import datetime
-import imaplib
+import ipywidgets as widgets
+from IPython.display import display, clear_output
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.parser import BytesParser
-from email.policy import default
-
 
 class Catalogo:
     def __init__(self):
         self.arquivo_catalogo = "catalogo.csv"
         self.arquivo_historico = "historico.csv"
+        self.capacidade_total = 1000  # Capacidade total do estoque (ajuste conforme necessário)
+        self.create_widgets()
+        self.check_stock_levels()
 
-    def adicionar_item(self):
-        codigo = input("Digite o código do item: ")
-        descricao = input("Digite a descrição do item: ")
-        quantidade = input("Digite a quantidade disponível: ")
+    def create_widgets(self):
+        self.out = widgets.Output()
+
+        # Widgets for adding items
+        self.add_codigo = widgets.Text(description="Código:")
+        self.add_descricao = widgets.Text(description="Descrição:")
+        self.add_quantidade = widgets.IntText(description="Quantidade:")
+        self.add_button = widgets.Button(description="Adicionar Item")
+        self.add_button.on_click(self.adicionar_item)
+
+        # Widgets for searching items
+        self.search_codigo = widgets.Text(description="Código:")
+        self.search_button = widgets.Button(description="Pesquisar Item")
+        self.search_button.on_click(self.pesquisar_item)
+
+        # Widgets for updating quantity
+        self.update_codigo = widgets.Text(description="Código:")
+        self.update_quantidade = widgets.IntText(description="Nova Quantidade:")
+        self.update_button = widgets.Button(description="Atualizar Quantidade")
+        self.update_button.on_click(self.atualizar_quantidade)
+
+        # Widget for displaying catalog
+        self.display_catalog_button = widgets.Button(description="Exibir Catálogo")
+        self.display_catalog_button.on_click(self.exibir_catalogo)
+
+        # Widget for displaying history
+        self.display_history_button = widgets.Button(description="Exibir Histórico")
+        self.display_history_button.on_click(self.exibir_historico)
+
+        # Widgets for removing items
+        self.remove_codigo = widgets.Text(description="Código:")
+        self.remove_button = widgets.Button(description="Remover Item")
+        self.remove_button.on_click(self.remover_item)
+
+    def adicionar_item(self, b):
+        codigo = self.add_codigo.value
+        descricao = self.add_descricao.value
+        quantidade = self.add_quantidade.value
 
         with open(self.arquivo_catalogo, "a", newline="") as arquivo:
             writer = csv.writer(arquivo)
             writer.writerow([codigo, descricao, quantidade])
 
-        print("Item adicionado com sucesso!")
+        with self.out:
+            clear_output()
+            print("Item adicionado com sucesso!")
 
-    def pesquisar_item(self):
-        codigo = input("Digite o código do item: ")
+        self.check_stock_levels()
+
+    def pesquisar_item(self, b):
+        codigo = self.search_codigo.value
 
         try:
             with open(self.arquivo_catalogo, "r") as arquivo:
                 reader = csv.reader(arquivo)
                 for linha in reader:
                     if linha[0] == codigo:
-                        print("Descrição:", linha[1])
-                        print("Quantidade disponível:", linha[2])
+                        with self.out:
+                            clear_output()
+                            print("Descrição:", linha[1])
+                            print("Quantidade disponível:", linha[2])
                         return
-            print("Item não encontrado.")
+            with self.out:
+                clear_output()
+                print("Item não encontrado.")
         except FileNotFoundError:
-            print("Arquivo do catálogo não encontrado.")
+            with self.out:
+                clear_output()
+                print("Arquivo do catálogo não encontrado.")
         except Exception as e:
-            print("Ocorreu um erro:", e)
+            with self.out:
+                clear_output()
+                print("Ocorreu um erro:", e)
 
-    def atualizar_quantidade(self):
-        codigo = input("Digite o código do item: ")
-        nova_quantidade = input("Digite a nova quantidade disponível: ")
+    def atualizar_quantidade(self, b):
+        codigo = self.update_codigo.value
+        nova_quantidade = self.update_quantidade.value
 
         try:
             linhas_atualizadas = []
@@ -58,45 +105,65 @@ class Catalogo:
                 writer = csv.writer(arquivo)
                 writer.writerows(linhas_atualizadas)
 
-            print("Quantidade atualizada com sucesso!")
+            with self.out:
+                clear_output()
+                print("Quantidade atualizada com sucesso!")
         except FileNotFoundError:
-            print("Arquivo do catálogo não encontrado.")
+            with self.out:
+                clear_output()
+                print("Arquivo do catálogo não encontrado.")
         except Exception as e:
-            print("Ocorreu um erro:", e)
+            with self.out:
+                clear_output()
+                print("Ocorreu um erro:", e)
 
-    def exibir_catalogo(self):
+        self.check_stock_levels()
+
+    def exibir_catalogo(self, b):
         try:
             with open(self.arquivo_catalogo, "r") as arquivo:
                 reader = csv.reader(arquivo)
-                for linha in reader:
-                    print("Código:", linha[0])
-                    print("Descrição:", linha[1])
-                    print("Quantidade disponível:", linha[2])
-                    print()
+                with self.out:
+                    clear_output()
+                    for linha in reader:
+                        print("Código:", linha[0])
+                        print("Descrição:", linha[1])
+                        print("Quantidade disponível:", linha[2])
+                        print()
         except FileNotFoundError:
-            print("Arquivo do catálogo não encontrado.")
+            with self.out:
+                clear_output()
+                print("Arquivo do catálogo não encontrado.")
         except Exception as e:
-            print("Ocorreu um erro:", e)
+            with self.out:
+                clear_output()
+                print("Ocorreu um erro:", e)
 
-    def exibir_historico(self):
+    def exibir_historico(self, b):
         try:
             with open(self.arquivo_historico, "r") as arquivo:
                 reader = csv.reader(arquivo)
-                for linha in reader:
-                    data = datetime.datetime.strptime(linha[0], "%Y-%m-%d %H:%M:%S")
-                    descricao = linha[1]
-                    quantidade = linha[2]
-                    print("Data e hora:", data)
-                    print("Descrição:", descricao)
-                    print("Quantidade:", quantidade)
-                    print()
+                with self.out:
+                    clear_output()
+                    for linha in reader:
+                        data = datetime.datetime.strptime(linha[0], "%Y-%m-%d %H:%M:%S")
+                        descricao = linha[1]
+                        quantidade = linha[2]
+                        print("Data e hora:", data)
+                        print("Descrição:", descricao)
+                        print("Quantidade:", quantidade)
+                        print()
         except FileNotFoundError:
-            print("Arquivo do histórico não encontrado.")
+            with self.out:
+                clear_output()
+                print("Arquivo do histórico não encontrado.")
         except Exception as e:
-            print("Ocorreu um erro:", e)
+            with self.out:
+                clear_output()
+                print("Ocorreu um erro:", e)
 
-    def remover_item(self):
-        codigo = input("Digite o código do item a ser removido: ")
+    def remover_item(self, b):
+        codigo = self.remove_codigo.value
         item_encontrado = False
 
         try:
@@ -113,93 +180,83 @@ class Catalogo:
                 with open(self.arquivo_catalogo, "w", newline="") as arquivo:
                     writer = csv.writer(arquivo)
                     writer.writerows(linhas_atualizadas)
-                print("Item removido com sucesso!")
+                with self.out:
+                    clear_output()
+                    print("Item removido com sucesso!")
             else:
-                print("Item não encontrado.")
+                with self.out:
+                    clear_output()
+                    print("Item não encontrado.")
         except FileNotFoundError:
-            print("Arquivo do catálogo não encontrado.")
+            with self.out:
+                clear_output()
+                print("Arquivo do catálogo não encontrado.")
         except Exception as e:
-            print("Ocorreu um erro:", e)
+            with self.out:
+                clear_output()
+                print("Ocorreu um erro:", e)
 
-    def menu(self):
-        while True:
-            print("1. Adicionar item")
-            print("2. Pesquisar item")
-            print("3. Atualizar quantidade")
-            print("4. Exibir catálogo")
-            print("5. Exibir histórico")
-            print("6. Remover item")
-            print("7. Sair")
+        self.check_stock_levels()
 
-            opcao = input("Digite a opção desejada: ")
+    def check_stock_levels(self):
+        try:
+            total_quantidade = 0
+            with open(self.arquivo_catalogo, "r") as arquivo:
+                reader = csv.reader(arquivo)
+                for linha in reader:
+                    total_quantidade += int(linha[2])
+            
+            if total_quantidade < 0.3 * self.capacidade_total:
+                self.enviar_aviso_email(total_quantidade)
+        except FileNotFoundError:
+            with self.out:
+                clear_output()
+                print("Arquivo do catálogo não encontrado.")
+        except Exception as e:
+            with self.out:
+                clear_output()
+                print("Ocorreu um erro ao verificar o nível de estoque:", e)
 
-            if opcao == "1":
-                self.adicionar_item()
-            elif opcao == "2":
-                self.pesquisar_item()
-            elif opcao == "3":
-                self.atualizar_quantidade()
-            elif opcao == "4":
-                self.exibir_catalogo()
-            elif opcao == "5":
-                self.exibir_historico()
-            elif opcao == "6":
-                self.remover_item()
-            elif opcao == "7":
-                break
-            else:
-                print("Opção inválida. Tente novamente.")
+    def enviar_aviso_email(self, quantidade_atual):
+        EMAIL_ACCOUNT = 'seu_email@exemplo.com'
+        PASSWORD = 'sua_senha'
+        FORWARD_TO_EMAIL = 'destinatario@exemplo.com'
+        AVISO = "Aviso: Almoxarifado com capacidade menor que 30%"
 
-            print()
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_ACCOUNT
+        msg['To'] = FORWARD_TO_EMAIL
+        msg['Subject'] = "Aviso de Baixo Estoque"
+        body = f"O estoque atual é de {quantidade_atual} itens, o que é menor que 30% da capacidade total."
+        msg.attach(MIMEText(body, 'plain'))
 
+        try:
+            with smtplib.SMTP('smtp.exemplo.com', 587) as server:
+                server.starttls()
+                server.login(EMAIL_ACCOUNT, PASSWORD)
+                server.sendmail(EMAIL_ACCOUNT, FORWARD_TO_EMAIL, msg.as_string())
+            with self.out:
+                clear_output()
+                print("E-mail de aviso enviado com sucesso!")
+        except Exception as e:
+            with self.out:
+                clear_output()
+                print("Ocorreu um erro ao enviar o e-mail:", e)
 
-# Configurações do e-mail
-IMAP_SERVER = 'imap.exemplo.com'
-IMAP_PORT = 993
-SMTP_SERVER = 'smtp.exemplo.com'
-SMTP_PORT = 587
-EMAIL_ACCOUNT = 'seu_email@exemplo.com'
-PASSWORD = 'sua_senha'
-FORWARD_TO_EMAIL = 'destinatario@exemplo.com'
-AVISO = "Aviso: Almoxarifado com capacidade menor que 30%"
+    def display_menu(self):
+        menu_box = widgets.VBox([
+            widgets.HBox([self.add_codigo, self.add_descricao, self.add_quantidade, self.add_button]),
+            widgets.HBox([self.search_codigo, self.search_button]),
+            widgets.HBox([self.update_codigo, self.update_quantidade, self.update_button]),
+            self.display_catalog_button,
+            self.display_history_button,
+            widgets.HBox([self.remove_codigo, self.remove_button]),
+            self.out
+        ])
+        display(menu_box)
 
+# Cria uma instância da classe Catalogo
+catalogo = Catalogo()
 
-def check_email():
-    mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
-    mail.login(EMAIL_ACCOUNT, PASSWORD)
-    mail.select('inbox')
-    status, messages = mail.search(None, '(UNSEEN)')
-    email_ids = messages[0].split()
-
-    for email_id in email_ids:
-        status, msg_data = mail.fetch(email_id, '(RFC822)')
-        raw_email = msg_data[0][1]
-        msg = BytesParser(policy=default).parsebytes(raw_email)
-
-        forward_email(msg)
-
-    mail.logout()
-
-
-def forward_email(original_msg):
-    msg = MIMEMultipart()
-    msg['From'] = EMAIL_ACCOUNT
-    msg['To'] = FORWARD_TO_EMAIL
-    msg['Subject'] = "Fwd: " + original_msg['Subject']
-    body = AVISO + "\n\n" + original_msg.get_body(preferencelist=('plain',)).get_content()
-
-    msg.attach(MIMEText(body, 'plain'))
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-        server.starttls()
-        server.login(EMAIL_ACCOUNT, PASSWORD)
-        server.sendmail(EMAIL_ACCOUNT, FORWARD_TO_EMAIL, msg.as_string())
-
-
-if __name__ == '__main__':
-    check_email()
-
-    # Cria uma instância da classe Catalogo
-    catalogo = Catalogo()
-
-    # Executa o programa
-    catalogo.menu()
+# Exibe o menu
+catalogo.display_menu()
